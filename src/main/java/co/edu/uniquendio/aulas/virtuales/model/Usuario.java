@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -34,4 +36,7 @@ public class Usuario {
     @ManyToOne
     @JoinColumn(name = "ROL_ID", nullable = false)
     private Rol rol;
+
+    @OneToMany(mappedBy = "estudiante")
+    private List<Matricula> matriculas;
 }

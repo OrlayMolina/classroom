@@ -19,7 +19,7 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
     @Query("SELECT u FROM Usuario u JOIN u.rol r WHERE r.nombreRol = :nombreRol")
     List<Usuario> findByNombreRol(@Param("nombreRol") String nombreRol);
 
-    @Query("SELECT u FROM Usuario u JOIN u.cursosEstudiante c WHERE c.cursoId = :cursoId")
+    @Query("SELECT u FROM Usuario u JOIN Matricula m ON u.usuarioId = m.estudianteId WHERE m.cursoId = :cursoId")
     List<Usuario> findEstudiantesByCursoId(@Param("cursoId") Long cursoId);
 
     @Query("SELECT u FROM Usuario u WHERE u.rol.rolId = 1 AND u.usuarioId IN (SELECT c.profesor.usuarioId FROM Curso c)")
