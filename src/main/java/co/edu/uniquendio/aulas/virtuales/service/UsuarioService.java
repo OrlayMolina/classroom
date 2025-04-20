@@ -1,14 +1,15 @@
 package co.edu.uniquendio.aulas.virtuales.service;
 
+import co.edu.uniquendio.aulas.virtuales.config.JWTUtils;
+import co.edu.uniquendio.aulas.virtuales.dto.LoginDTO;
+import co.edu.uniquendio.aulas.virtuales.dto.TokenDTO;
+import jakarta.persistence.*;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import co.edu.uniquendio.aulas.virtuales.dto.UsuarioDTO;
 import co.edu.uniquendio.aulas.virtuales.exception.AuthenticationException;
 import co.edu.uniquendio.aulas.virtuales.exception.ResourceNotFoundException;
 import co.edu.uniquendio.aulas.virtuales.model.Usuario;
 import co.edu.uniquendio.aulas.virtuales.repository.UsuarioRepository;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.ParameterMode;
-import jakarta.persistence.PersistenceContext;
-import jakarta.persistence.StoredProcedureQuery;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
@@ -16,7 +17,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
+
+import static co.edu.uniquendio.aulas.virtuales.config.CryptoPassword.encriptarPassword;
 
 @Service
 @RequiredArgsConstructor
@@ -25,8 +30,10 @@ public class UsuarioService {
     @PersistenceContext
     private EntityManager entityManager;
 
+    private final JWTUtils jwtUtils;
     private final UsuarioRepository usuarioRepository;
     private final ModelMapper modelMapper;
+    private final BCryptPasswordEncoder passwordEncoder;
 
     /**
      * Crea un nuevo usuario utilizando el procedimiento almacenado PK_USUARIO.PCREAR_USUARIO
@@ -44,7 +51,8 @@ public class UsuarioService {
                 .registerStoredProcedureParameter("usuario_id", Long.class, ParameterMode.OUT);
 
         query.setParameter("email", usuarioDTO.getEmail());
-        query.setParameter("clave", usuarioDTO.getClave()); // En un sistema real, se debe encriptar la clave
+        String claveEncriptada = encriptarPassword(usuarioDTO.getClave());
+        query.setParameter("clave", claveEncriptada);
         query.setParameter("documento_id", usuarioDTO.getDocumentoId());
         query.setParameter("nombre", usuarioDTO.getNombre());
         query.setParameter("apellido", usuarioDTO.getApellido());
@@ -78,9 +86,16 @@ public class UsuarioService {
                 .registerStoredProcedureParameter("apellido", String.class, ParameterMode.IN)
                 .registerStoredProcedureParameter("rol_id", Long.class, ParameterMode.IN);
 
+        String claveEncriptada;
+        if (usuarioDTO.getClave() != null && !usuarioDTO.getClave().isEmpty()) {
+            claveEncriptada = encriptarPassword(usuarioDTO.getClave());
+        } else {
+            Usuario usuarioExistente = usuarioRepository.findById(id).orElseThrow();
+            claveEncriptada = usuarioExistente.getClave();
+        }
         query.setParameter("usuario_id", id);
         query.setParameter("email", usuarioDTO.getEmail());
-        query.setParameter("clave", usuarioDTO.getClave()); // En un sistema real, se debe encriptar la clave
+        query.setParameter("clave", claveEncriptada);
         query.setParameter("documento_id", usuarioDTO.getDocumentoId());
         query.setParameter("nombre", usuarioDTO.getNombre());
         query.setParameter("apellido", usuarioDTO.getApellido());
@@ -97,7 +112,6 @@ public class UsuarioService {
      */
     @Transactional
     public void eliminarUsuario(Long id) {
-        // Verificamos que el usuario existe
         if (!usuarioRepository.existsById(id)) {
             throw new ResourceNotFoundException("Usuario no encontrado con id: " + id);
         }
@@ -113,30 +127,43 @@ public class UsuarioService {
     /**
      * Autentica un usuario utilizando la función PK_USUARIO.PAUTENTICAR_USUARIO
      */
+    /**
+     * Autentica un usuario utilizando la función PK_USUARIO.PVALIDAR_CREDENCIALES
+     */
     @Transactional(readOnly = true)
-    public UsuarioDTO autenticarUsuario(String email, String clave) {
-        StoredProcedureQuery query = entityManager
-                .createStoredProcedureQuery("PK_USUARIO.PAUTENTICAR_USUARIO")
-                .registerStoredProcedureParameter("p_email", String.class, ParameterMode.IN)
-                .registerStoredProcedureParameter("p_clave", String.class, ParameterMode.IN)
-                .registerStoredProcedureParameter("RETURN_VALUE", Long.class, ParameterMode.OUT);
+    public TokenDTO autenticarUsuario(LoginDTO loginDTO) {
+        Optional<Usuario> usuarioOpt = usuarioRepository.findByEmail(loginDTO.getEmail());
 
-        query.setParameter("p_email", email);
-        query.setParameter("p_clave", clave); // En un sistema real, se debe verificar con la clave encriptada
-
-        query.execute();
-
-        Long usuarioId = (Long) query.getOutputParameterValue("RETURN_VALUE");
-
-
-        if (usuarioId == 0 || usuarioId == -1) {
+        if (usuarioOpt.isEmpty()) {
+            System.out.println("Usuario no encontrado en la base de datos");
             throw new AuthenticationException("Credenciales inválidas");
         }
 
-        Usuario usuario = usuarioRepository.findById(usuarioId)
-                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con id: " + usuarioId));
+        Usuario usuario = usuarioOpt.get();
 
-        return modelMapper.map(usuario, UsuarioDTO.class);
+        if (!passwordEncoder.matches(loginDTO.getPassword(), usuario.getClave())) {
+            System.out.println("La contraseña no coincide");
+            throw new AuthenticationException("Credenciales inválidas");
+        }
+
+        Map<String, Object> map = construirClaims(usuario);
+        try {
+            String token = jwtUtils.generarToken(usuario.getEmail(), map);
+            return new TokenDTO(token);
+        } catch (Exception e) {
+            System.err.println("Error en la generación del token: " + e.getClass().getName());
+            System.err.println("Mensaje: " + e.getMessage());
+            e.printStackTrace();
+            throw e;
+        }
+    }
+
+    private Map<String, Object> construirClaims(Usuario usuario) {
+        return Map.of(
+                "user_id", usuario.getUsuarioId(),
+                "email", usuario.getEmail(),
+                "rol_id", usuario.getRol()
+        );
     }
 
     /**

@@ -1,5 +1,6 @@
 package co.edu.uniquendio.aulas.virtuales.controller;
 
+import co.edu.uniquendio.aulas.virtuales.dto.MensajeDTO;
 import co.edu.uniquendio.aulas.virtuales.dto.UsuarioDTO;
 import co.edu.uniquendio.aulas.virtuales.service.UsuarioService;
 import lombok.RequiredArgsConstructor;
@@ -8,82 +9,131 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/usuarios")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class UsuarioController {
 
     private final UsuarioService usuarioService;
 
     @PostMapping
-    public ResponseEntity<UsuarioDTO> crearUsuario(@RequestBody UsuarioDTO usuarioDTO) {
-        UsuarioDTO nuevoUsuario = usuarioService.crearUsuario(usuarioDTO);
-        return new ResponseEntity<>(nuevoUsuario, HttpStatus.CREATED);
+    public ResponseEntity<MensajeDTO<UsuarioDTO>> crearUsuario(@RequestBody UsuarioDTO usuarioDTO) {
+        try {
+            UsuarioDTO nuevoUsuario = usuarioService.crearUsuario(usuarioDTO);
+            MensajeDTO<UsuarioDTO> respuesta = new MensajeDTO<>(false, nuevoUsuario);
+            return ResponseEntity.ok(respuesta);
+        }catch (Exception e) {
+            MensajeDTO<UsuarioDTO> respuesta = new MensajeDTO<>(true, null);
+            return new ResponseEntity<>(respuesta, HttpStatus.NOT_ACCEPTABLE);
+        }
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<UsuarioDTO> actualizarUsuario(@PathVariable Long id, @RequestBody UsuarioDTO usuarioDTO) {
-        UsuarioDTO actualizadoUsuario = usuarioService.actualizarUsuario(id, usuarioDTO);
-        return ResponseEntity.ok(actualizadoUsuario);
+    public ResponseEntity<MensajeDTO<UsuarioDTO>> actualizarUsuario(@PathVariable Long id, @RequestBody UsuarioDTO usuarioDTO) {
+        try {
+            UsuarioDTO actualizadoUsuario = usuarioService.actualizarUsuario(id, usuarioDTO);
+            MensajeDTO<UsuarioDTO> respuesta = new MensajeDTO<>(false, actualizadoUsuario);
+            return ResponseEntity.ok(respuesta);
+        } catch (Exception e) {
+            MensajeDTO<UsuarioDTO> respuesta = new MensajeDTO<>(true, null);
+            return new ResponseEntity<>(respuesta, HttpStatus.NOT_FOUND);
+        }
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> eliminarUsuario(@PathVariable Long id) {
-        usuarioService.eliminarUsuario(id);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<MensajeDTO<Void>> eliminarUsuario(@PathVariable Long id) {
+        try {
+            usuarioService.eliminarUsuario(id);
+            MensajeDTO<Void> respuesta = new MensajeDTO<>(false, null);
+            return ResponseEntity.ok(respuesta);
+        } catch (Exception e) {
+            MensajeDTO<Void> respuesta = new MensajeDTO<>(true, null);
+            return new ResponseEntity<>(respuesta, HttpStatus.NOT_FOUND);
+        }
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<UsuarioDTO> obtenerUsuarioPorId(@PathVariable Long id) {
-        UsuarioDTO usuario = usuarioService.getUsuarioPorId(id);
-        return ResponseEntity.ok(usuario);
+    public ResponseEntity<MensajeDTO<UsuarioDTO>> obtenerUsuarioPorId(@PathVariable Long id) {
+        try {
+            UsuarioDTO usuario = usuarioService.getUsuarioPorId(id);
+            MensajeDTO<UsuarioDTO> respuesta = new MensajeDTO<>(false, usuario);
+            return ResponseEntity.ok(respuesta);
+        } catch (Exception e) {
+            MensajeDTO<UsuarioDTO> respuesta = new MensajeDTO<>(true, null);
+            return new ResponseEntity<>(respuesta, HttpStatus.NOT_FOUND);
+        }
     }
 
     @GetMapping
-    public ResponseEntity<List<UsuarioDTO>> listarUsuarios() {
-        List<UsuarioDTO> usuarios = usuarioService.listarTodosLosUsuarios();
-        return ResponseEntity.ok(usuarios);
+    public ResponseEntity<MensajeDTO<List<UsuarioDTO>>> listarUsuarios() {
+        try {
+            List<UsuarioDTO> usuarios = usuarioService.listarTodosLosUsuarios();
+            MensajeDTO<List<UsuarioDTO>> respuesta = new MensajeDTO<>(false, usuarios);
+            return ResponseEntity.ok(respuesta);
+        } catch (Exception e) {
+            MensajeDTO<List<UsuarioDTO>> respuesta = new MensajeDTO<>(true, null);
+            return new ResponseEntity<>(respuesta, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @GetMapping("/profesores")
-    public ResponseEntity<List<UsuarioDTO>> listarProfesores() {
-        List<UsuarioDTO> profesores = usuarioService.listarProfesores();
-        return ResponseEntity.ok(profesores);
+    public ResponseEntity<MensajeDTO<List<UsuarioDTO>>> listarProfesores() {
+        try {
+            List<UsuarioDTO> profesores = usuarioService.listarProfesores();
+            MensajeDTO<List<UsuarioDTO>> respuesta = new MensajeDTO<>(false, profesores);
+            return ResponseEntity.ok(respuesta);
+        } catch (Exception e) {
+            MensajeDTO<List<UsuarioDTO>> respuesta = new MensajeDTO<>(true, null);
+            return new ResponseEntity<>(respuesta, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @GetMapping("/estudiantes")
-    public ResponseEntity<List<UsuarioDTO>> listarEstudiantes() {
-        List<UsuarioDTO> estudiantes = usuarioService.listarEstudiantes();
-        return ResponseEntity.ok(estudiantes);
+    public ResponseEntity<MensajeDTO<List<UsuarioDTO>>> listarEstudiantes() {
+        try {
+            List<UsuarioDTO> estudiantes = usuarioService.listarEstudiantes();
+            MensajeDTO<List<UsuarioDTO>> respuesta = new MensajeDTO<>(false, estudiantes);
+            return ResponseEntity.ok(respuesta);
+        } catch (Exception e) {
+            MensajeDTO<List<UsuarioDTO>> respuesta = new MensajeDTO<>(true, null);
+            return new ResponseEntity<>(respuesta, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @GetMapping("/curso/{cursoId}/estudiantes")
-    public ResponseEntity<List<UsuarioDTO>> listarEstudiantesPorCurso(@PathVariable Long cursoId) {
-        List<UsuarioDTO> estudiantes = usuarioService.obtenerEstudiantesCurso(cursoId);
-        return ResponseEntity.ok(estudiantes);
-    }
-
-    @PostMapping("/autenticar")
-    public ResponseEntity<UsuarioDTO> autenticarUsuario(@RequestBody Map<String, String> credenciales) {
-        String email = credenciales.get("email");
-        String clave = credenciales.get("clave");
-
-        UsuarioDTO usuario = usuarioService.autenticarUsuario(email, clave);
-        return ResponseEntity.ok(usuario);
+    public ResponseEntity<MensajeDTO<List<UsuarioDTO>>> listarEstudiantesPorCurso(@PathVariable Long cursoId) {
+        try {
+            List<UsuarioDTO> estudiantes = usuarioService.obtenerEstudiantesCurso(cursoId);
+            MensajeDTO<List<UsuarioDTO>> respuesta = new MensajeDTO<>(false, estudiantes);
+            return ResponseEntity.ok(respuesta);
+        } catch (Exception e) {
+            MensajeDTO<List<UsuarioDTO>> respuesta = new MensajeDTO<>(true, null);
+            return new ResponseEntity<>(respuesta, HttpStatus.NOT_FOUND);
+        }
     }
 
     @GetMapping("/{id}/es-profesor")
-    public ResponseEntity<Boolean> esProfesor(@PathVariable Long id) {
-        boolean esProfesor = usuarioService.esProfesor(id);
-        return ResponseEntity.ok(esProfesor);
+    public ResponseEntity<MensajeDTO<Boolean>> esProfesor(@PathVariable Long id) {
+        try {
+            boolean esProfesor = usuarioService.esProfesor(id);
+            MensajeDTO<Boolean> respuesta = new MensajeDTO<>(false, esProfesor);
+            return ResponseEntity.ok(respuesta);
+        } catch (Exception e) {
+            MensajeDTO<Boolean> respuesta = new MensajeDTO<>(true, null);
+            return new ResponseEntity<>(respuesta, HttpStatus.NOT_FOUND);
+        }
     }
 
     @GetMapping("/{id}/es-estudiante")
-    public ResponseEntity<Boolean> esEstudiante(@PathVariable Long id) {
-        boolean esEstudiante = usuarioService.esEstudiante(id);
-        return ResponseEntity.ok(esEstudiante);
+    public ResponseEntity<MensajeDTO<Boolean>> esEstudiante(@PathVariable Long id) {
+        try {
+            boolean esEstudiante = usuarioService.esEstudiante(id);
+            MensajeDTO<Boolean> respuesta = new MensajeDTO<>(false, esEstudiante);
+            return ResponseEntity.ok(respuesta);
+        } catch (Exception e) {
+            MensajeDTO<Boolean> respuesta = new MensajeDTO<>(true, null);
+            return new ResponseEntity<>(respuesta, HttpStatus.NOT_FOUND);
+        }
     }
 }

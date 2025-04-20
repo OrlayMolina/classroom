@@ -1,5 +1,6 @@
 package co.edu.uniquendio.aulas.virtuales.controller;
 
+import co.edu.uniquendio.aulas.virtuales.dto.MensajeDTO;
 import co.edu.uniquendio.aulas.virtuales.dto.OpcionPreguntaDTO;
 import co.edu.uniquendio.aulas.virtuales.service.OpcionPreguntaService;
 import jakarta.validation.Valid;
@@ -13,7 +14,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/opciones")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*") // Para desarrollo, en producción se debe limitar
+@CrossOrigin(origins = "*")
 public class OpcionPreguntaController {
 
     private final OpcionPreguntaService opcionPreguntaService;
@@ -22,45 +23,75 @@ public class OpcionPreguntaController {
      * Crea una nueva opción de pregunta
      */
     @PostMapping
-    public ResponseEntity<OpcionPreguntaDTO> crearOpcionPregunta(@Valid @RequestBody OpcionPreguntaDTO opcionDTO) {
-        OpcionPreguntaDTO nuevaOpcion = opcionPreguntaService.crearOpcionPregunta(opcionDTO);
-        return new ResponseEntity<>(nuevaOpcion, HttpStatus.CREATED);
+    public ResponseEntity<MensajeDTO<OpcionPreguntaDTO>> crearOpcionPregunta(@Valid @RequestBody OpcionPreguntaDTO opcionDTO) {
+        try {
+            OpcionPreguntaDTO nuevaOpcion = opcionPreguntaService.crearOpcionPregunta(opcionDTO);
+            MensajeDTO<OpcionPreguntaDTO> respuesta = new MensajeDTO<>(false, nuevaOpcion);
+            return new ResponseEntity<>(respuesta, HttpStatus.CREATED);
+        } catch (Exception e) {
+            MensajeDTO<OpcionPreguntaDTO> respuesta = new MensajeDTO<>(true, null);
+            return new ResponseEntity<>(respuesta, HttpStatus.NOT_ACCEPTABLE);
+        }
     }
 
     /**
      * Actualiza una opción de pregunta existente
      */
     @PutMapping("/{id}")
-    public ResponseEntity<OpcionPreguntaDTO> actualizarOpcionPregunta(@PathVariable Long id,
-                                                                      @Valid @RequestBody OpcionPreguntaDTO opcionDTO) {
-        OpcionPreguntaDTO opcionActualizada = opcionPreguntaService.actualizarOpcionPregunta(id, opcionDTO);
-        return ResponseEntity.ok(opcionActualizada);
+    public ResponseEntity<MensajeDTO<OpcionPreguntaDTO>> actualizarOpcionPregunta(@PathVariable Long id,
+                                                                                  @Valid @RequestBody OpcionPreguntaDTO opcionDTO) {
+        try {
+            OpcionPreguntaDTO opcionActualizada = opcionPreguntaService.actualizarOpcionPregunta(id, opcionDTO);
+            MensajeDTO<OpcionPreguntaDTO> respuesta = new MensajeDTO<>(false, opcionActualizada);
+            return ResponseEntity.ok(respuesta);
+        } catch (Exception e) {
+            MensajeDTO<OpcionPreguntaDTO> respuesta = new MensajeDTO<>(true, null);
+            return new ResponseEntity<>(respuesta, HttpStatus.NOT_FOUND);
+        }
     }
 
     /**
      * Elimina una opción de pregunta por su ID
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> eliminarOpcionPregunta(@PathVariable Long id) {
-        opcionPreguntaService.eliminarOpcionPregunta(id);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<MensajeDTO<Void>> eliminarOpcionPregunta(@PathVariable Long id) {
+        try {
+            opcionPreguntaService.eliminarOpcionPregunta(id);
+            MensajeDTO<Void> respuesta = new MensajeDTO<>(false, null);
+            return ResponseEntity.ok(respuesta);
+        } catch (Exception e) {
+            MensajeDTO<Void> respuesta = new MensajeDTO<>(true, null);
+            return new ResponseEntity<>(respuesta, HttpStatus.NOT_FOUND);
+        }
     }
 
     /**
      * Obtiene una opción de pregunta por su ID
      */
     @GetMapping("/{id}")
-    public ResponseEntity<OpcionPreguntaDTO> getOpcionPreguntaPorId(@PathVariable Long id) {
-        OpcionPreguntaDTO opcion = opcionPreguntaService.getOpcionPreguntaPorId(id);
-        return ResponseEntity.ok(opcion);
+    public ResponseEntity<MensajeDTO<OpcionPreguntaDTO>> getOpcionPreguntaPorId(@PathVariable Long id) {
+        try {
+            OpcionPreguntaDTO opcion = opcionPreguntaService.getOpcionPreguntaPorId(id);
+            MensajeDTO<OpcionPreguntaDTO> respuesta = new MensajeDTO<>(false, opcion);
+            return ResponseEntity.ok(respuesta);
+        } catch (Exception e) {
+            MensajeDTO<OpcionPreguntaDTO> respuesta = new MensajeDTO<>(true, null);
+            return new ResponseEntity<>(respuesta, HttpStatus.NOT_FOUND);
+        }
     }
 
     /**
      * Lista todas las opciones de una pregunta específica
      */
     @GetMapping("/pregunta/{preguntaId}")
-    public ResponseEntity<List<OpcionPreguntaDTO>> listarOpcionesPorPregunta(@PathVariable Long preguntaId) {
-        List<OpcionPreguntaDTO> opciones = opcionPreguntaService.listarOpcionesPorPregunta(preguntaId);
-        return ResponseEntity.ok(opciones);
+    public ResponseEntity<MensajeDTO<List<OpcionPreguntaDTO>>> listarOpcionesPorPregunta(@PathVariable Long preguntaId) {
+        try {
+            List<OpcionPreguntaDTO> opciones = opcionPreguntaService.listarOpcionesPorPregunta(preguntaId);
+            MensajeDTO<List<OpcionPreguntaDTO>> respuesta = new MensajeDTO<>(false, opciones);
+            return ResponseEntity.ok(respuesta);
+        } catch (Exception e) {
+            MensajeDTO<List<OpcionPreguntaDTO>> respuesta = new MensajeDTO<>(true, null);
+            return new ResponseEntity<>(respuesta, HttpStatus.NOT_FOUND);
+        }
     }
 }
