@@ -84,6 +84,7 @@ public class CursoController {
             MensajeDTO<List<CursoDTO>> respuesta = new MensajeDTO<>(false, cursos);
             return ResponseEntity.ok(respuesta);
         } catch (Exception e) {
+            e.printStackTrace();
             MensajeDTO<List<CursoDTO>> respuesta = new MensajeDTO<>(true, null);
             return new ResponseEntity<>(respuesta, HttpStatus.NOT_FOUND);
         }

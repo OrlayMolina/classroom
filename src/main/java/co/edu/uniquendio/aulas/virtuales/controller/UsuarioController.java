@@ -1,6 +1,7 @@
 package co.edu.uniquendio.aulas.virtuales.controller;
 
 import co.edu.uniquendio.aulas.virtuales.dto.MensajeDTO;
+import co.edu.uniquendio.aulas.virtuales.dto.RolDTO;
 import co.edu.uniquendio.aulas.virtuales.dto.UsuarioDTO;
 import co.edu.uniquendio.aulas.virtuales.service.UsuarioService;
 import lombok.RequiredArgsConstructor;
@@ -133,6 +134,18 @@ public class UsuarioController {
             return ResponseEntity.ok(respuesta);
         } catch (Exception e) {
             MensajeDTO<Boolean> respuesta = new MensajeDTO<>(true, null);
+            return new ResponseEntity<>(respuesta, HttpStatus.NOT_FOUND);
+        }
+    }
+
+    @GetMapping("/rol/{id}")
+    public ResponseEntity<MensajeDTO<RolDTO>> usuarioRol(@PathVariable Long id) {
+        try {
+            RolDTO rolDTO = usuarioService.obtenerNombreRolUsuario(id);
+            MensajeDTO<RolDTO> respuesta = new MensajeDTO<>(false, rolDTO);
+            return ResponseEntity.ok(respuesta);
+        } catch (Exception e) {
+            MensajeDTO<RolDTO> respuesta = new MensajeDTO<>(true, null);
             return new ResponseEntity<>(respuesta, HttpStatus.NOT_FOUND);
         }
     }

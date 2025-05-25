@@ -7,10 +7,7 @@ import co.edu.uniquendio.aulas.virtuales.dto.PreguntaDTO;
 import co.edu.uniquendio.aulas.virtuales.exception.ResourceNotFoundException;
 import co.edu.uniquendio.aulas.virtuales.model.Examen;
 import co.edu.uniquendio.aulas.virtuales.repository.ExamenRepository;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.ParameterMode;
-import jakarta.persistence.PersistenceContext;
-import jakarta.persistence.StoredProcedureQuery;
+import jakarta.persistence.*;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
@@ -32,82 +29,81 @@ public class ExamenService {
     private final ModelMapper modelMapper;
 
     /**
-     * Crea un nuevo examen utilizando el procedimiento almacenado PK_EXAMEN.PCREAR_EXAMEN
+     * Crea un nuevo examen utilizando el procedimiento almacenado PCREAR_EXAMEN_COMPLETO
      */
     @Transactional
     public ExamenDTO crearExamen(ExamenDTO examenDTO) {
         StoredProcedureQuery query = entityManager
-                .createStoredProcedureQuery("PK_EXAMEN.PCREAR_EXAMEN")
-                .registerStoredProcedureParameter("nombre", String.class, ParameterMode.IN)
-                .registerStoredProcedureParameter("descripcion", String.class, ParameterMode.IN)
-                .registerStoredProcedureParameter("categoria", String.class, ParameterMode.IN)
-                .registerStoredProcedureParameter("cant_banco_preguntas", Integer.class, ParameterMode.IN)
-                .registerStoredProcedureParameter("cant_preguntas_estudiante", Integer.class, ParameterMode.IN)
-                .registerStoredProcedureParameter("limite_tiempo", Integer.class, ParameterMode.IN)
-                .registerStoredProcedureParameter("fecha_programada", Timestamp.class, ParameterMode.IN)
-                .registerStoredProcedureParameter("profesor_id", Long.class, ParameterMode.IN)
-                .registerStoredProcedureParameter("tema_id", Long.class, ParameterMode.IN)
-                .registerStoredProcedureParameter("tipo_prueba_id", Long.class, ParameterMode.IN)
-                .registerStoredProcedureParameter("curso_id", Long.class, ParameterMode.IN)
-                .registerStoredProcedureParameter("examen_id", Long.class, ParameterMode.OUT);
+                .createStoredProcedureQuery("PCREAR_EXAMEN_COMPLETO")
+                .registerStoredProcedureParameter("p_nombre", String.class, ParameterMode.IN)
+                .registerStoredProcedureParameter("p_descripcion", String.class, ParameterMode.IN)
+                .registerStoredProcedureParameter("p_categoria", String.class, ParameterMode.IN)
+                .registerStoredProcedureParameter("p_cant_banco_preguntas", Integer.class, ParameterMode.IN)
+                .registerStoredProcedureParameter("p_cant_preguntas_estudiante", Integer.class, ParameterMode.IN)
+                .registerStoredProcedureParameter("p_limite_tiempo", Integer.class, ParameterMode.IN)
+                .registerStoredProcedureParameter("p_fecha_programada", Timestamp.class, ParameterMode.IN)
+                .registerStoredProcedureParameter("p_profesor_id", Long.class, ParameterMode.IN)
+                .registerStoredProcedureParameter("p_tema_id", Long.class, ParameterMode.IN)
+                .registerStoredProcedureParameter("p_tipo_prueba_id", Long.class, ParameterMode.IN)
+                .registerStoredProcedureParameter("p_curso_id", Long.class, ParameterMode.IN)
+                .registerStoredProcedureParameter("p_examen_id", Long.class, ParameterMode.OUT);
 
-        query.setParameter("nombre", examenDTO.getNombre());
-        query.setParameter("descripcion", examenDTO.getDescripcion());
-        query.setParameter("categoria", examenDTO.getCategoria());
-        query.setParameter("cant_banco_preguntas", examenDTO.getCantBancoPreguntas() != null ? examenDTO.getCantBancoPreguntas() : 0);
-        query.setParameter("cant_preguntas_estudiante", examenDTO.getCantPreguntasEstudiante() != null ? examenDTO.getCantPreguntasEstudiante() : 0);
-        query.setParameter("limite_tiempo", examenDTO.getLimiteTiempo());
-        query.setParameter("fecha_programada", examenDTO.getFechaProgramada() != null ? new Timestamp(examenDTO.getFechaProgramada().getTime()) : null);
-        query.setParameter("profesor_id", examenDTO.getProfesorId());
-        query.setParameter("tema_id", examenDTO.getTemaId());
-        query.setParameter("tipo_prueba_id", examenDTO.getTipoPruebaId());
-        query.setParameter("curso_id", examenDTO.getCursoId());
+        query.setParameter("p_nombre", examenDTO.getNombre());
+        query.setParameter("p_descripcion", examenDTO.getDescripcion());
+        query.setParameter("p_categoria", examenDTO.getCategoria());
+        query.setParameter("p_cant_banco_preguntas", examenDTO.getCantBancoPreguntas() != null ? examenDTO.getCantBancoPreguntas() : 0);
+        query.setParameter("p_cant_preguntas_estudiante", examenDTO.getCantPreguntasEstudiante() != null ? examenDTO.getCantPreguntasEstudiante() : 0);
+        query.setParameter("p_limite_tiempo", examenDTO.getLimiteTiempo());
+        query.setParameter("p_fecha_programada", examenDTO.getFechaProgramada() != null ? new Timestamp(examenDTO.getFechaProgramada().getTime()) : null);
+        query.setParameter("p_profesor_id", examenDTO.getProfesorId());
+        query.setParameter("p_tema_id", examenDTO.getTemaId());
+        query.setParameter("p_tipo_prueba_id", examenDTO.getTipoPruebaId());
+        query.setParameter("p_curso_id", examenDTO.getCursoId());
 
         query.execute();
 
-        Long examenId = (Long) query.getOutputParameterValue("examen_id");
+        Long examenId = (Long) query.getOutputParameterValue("p_examen_id");
         examenDTO.setExamenId(examenId);
 
         return examenDTO;
     }
 
     /**
-     * Actualiza un examen existente utilizando el procedimiento almacenado PK_EXAMEN.PACTUALIZAR_EXAMEN
+     * Actualiza un examen existente utilizando el procedimiento almacenado PACTUALIZAR_EXAMEN_COMPLETO
      */
     @Transactional
     public ExamenDTO actualizarExamen(Long id, ExamenDTO examenDTO) {
-        // Verificamos que el examen existe
         if (!examenRepository.existsById(id)) {
             throw new ResourceNotFoundException("Examen no encontrado con id: " + id);
         }
 
         StoredProcedureQuery query = entityManager
-                .createStoredProcedureQuery("PK_EXAMEN.PACTUALIZAR_EXAMEN")
-                .registerStoredProcedureParameter("examen_id", Long.class, ParameterMode.IN)
-                .registerStoredProcedureParameter("nombre", String.class, ParameterMode.IN)
-                .registerStoredProcedureParameter("descripcion", String.class, ParameterMode.IN)
-                .registerStoredProcedureParameter("categoria", String.class, ParameterMode.IN)
-                .registerStoredProcedureParameter("cant_banco_preguntas", Integer.class, ParameterMode.IN)
-                .registerStoredProcedureParameter("cant_preguntas_estudiante", Integer.class, ParameterMode.IN)
-                .registerStoredProcedureParameter("limite_tiempo", Integer.class, ParameterMode.IN)
-                .registerStoredProcedureParameter("fecha_programada", Timestamp.class, ParameterMode.IN)
-                .registerStoredProcedureParameter("profesor_id", Long.class, ParameterMode.IN)
-                .registerStoredProcedureParameter("tema_id", Long.class, ParameterMode.IN)
-                .registerStoredProcedureParameter("tipo_prueba_id", Long.class, ParameterMode.IN)
-                .registerStoredProcedureParameter("curso_id", Long.class, ParameterMode.IN);
+                .createStoredProcedureQuery("PACTUALIZAR_EXAMEN_COMPLETO")
+                .registerStoredProcedureParameter("p_examen_id", Long.class, ParameterMode.IN)
+                .registerStoredProcedureParameter("p_nombre", String.class, ParameterMode.IN)
+                .registerStoredProcedureParameter("p_descripcion", String.class, ParameterMode.IN)
+                .registerStoredProcedureParameter("p_categoria", String.class, ParameterMode.IN)
+                .registerStoredProcedureParameter("p_cant_banco_preguntas", Integer.class, ParameterMode.IN)
+                .registerStoredProcedureParameter("p_cant_preguntas_estudiante", Integer.class, ParameterMode.IN)
+                .registerStoredProcedureParameter("p_limite_tiempo", Integer.class, ParameterMode.IN)
+                .registerStoredProcedureParameter("p_fecha_programada", Timestamp.class, ParameterMode.IN)
+                .registerStoredProcedureParameter("p_profesor_id", Long.class, ParameterMode.IN)
+                .registerStoredProcedureParameter("p_tema_id", Long.class, ParameterMode.IN)
+                .registerStoredProcedureParameter("p_tipo_prueba_id", Long.class, ParameterMode.IN)
+                .registerStoredProcedureParameter("p_curso_id", Long.class, ParameterMode.IN);
 
-        query.setParameter("examen_id", id);
-        query.setParameter("nombre", examenDTO.getNombre());
-        query.setParameter("descripcion", examenDTO.getDescripcion());
-        query.setParameter("categoria", examenDTO.getCategoria());
-        query.setParameter("cant_banco_preguntas", examenDTO.getCantBancoPreguntas() != null ? examenDTO.getCantBancoPreguntas() : 0);
-        query.setParameter("cant_preguntas_estudiante", examenDTO.getCantPreguntasEstudiante() != null ? examenDTO.getCantPreguntasEstudiante() : 0);
-        query.setParameter("limite_tiempo", examenDTO.getLimiteTiempo());
-        query.setParameter("fecha_programada", examenDTO.getFechaProgramada() != null ? new Timestamp(examenDTO.getFechaProgramada().getTime()) : null);
-        query.setParameter("profesor_id", examenDTO.getProfesorId());
-        query.setParameter("tema_id", examenDTO.getTemaId());
-        query.setParameter("tipo_prueba_id", examenDTO.getTipoPruebaId());
-        query.setParameter("curso_id", examenDTO.getCursoId());
+        query.setParameter("p_examen_id", id);
+        query.setParameter("p_nombre", examenDTO.getNombre());
+        query.setParameter("p_descripcion", examenDTO.getDescripcion());
+        query.setParameter("p_categoria", examenDTO.getCategoria());
+        query.setParameter("p_cant_banco_preguntas", examenDTO.getCantBancoPreguntas() != null ? examenDTO.getCantBancoPreguntas() : 0);
+        query.setParameter("p_cant_preguntas_estudiante", examenDTO.getCantPreguntasEstudiante() != null ? examenDTO.getCantPreguntasEstudiante() : 0);
+        query.setParameter("p_limite_tiempo", examenDTO.getLimiteTiempo());
+        query.setParameter("p_fecha_programada", examenDTO.getFechaProgramada() != null ? new Timestamp(examenDTO.getFechaProgramada().getTime()) : null);
+        query.setParameter("p_profesor_id", examenDTO.getProfesorId());
+        query.setParameter("p_tema_id", examenDTO.getTemaId());
+        query.setParameter("p_tipo_prueba_id", examenDTO.getTipoPruebaId());
+        query.setParameter("p_curso_id", examenDTO.getCursoId());
 
         query.execute();
 
@@ -116,54 +112,91 @@ public class ExamenService {
     }
 
     /**
-     * Elimina un examen utilizando el procedimiento almacenado PK_EXAMEN.PELIMINAR_EXAMEN
+     * Elimina un examen utilizando el procedimiento almacenado PELIMINAR_EXAMEN_COMPLETO
      */
     @Transactional
     public void eliminarExamen(Long id) {
-        // Verificamos que el examen existe
         if (!examenRepository.existsById(id)) {
             throw new ResourceNotFoundException("Examen no encontrado con id: " + id);
         }
 
         StoredProcedureQuery query = entityManager
-                .createStoredProcedureQuery("PK_EXAMEN.PELIMINAR_EXAMEN")
-                .registerStoredProcedureParameter("examen_id", Long.class, ParameterMode.IN);
+                .createStoredProcedureQuery("PELIMINAR_EXAMEN_COMPLETO")
+                .registerStoredProcedureParameter("p_examen_id", Long.class, ParameterMode.IN);
 
-        query.setParameter("examen_id", id);
+        query.setParameter("p_examen_id", id);
         query.execute();
     }
 
     /**
-     * Configura un examen utilizando el procedimiento almacenado PK_EXAMEN.PCONFIGURAR_EXAMEN
+     * Configura un examen utilizando el procedimiento almacenado PCONFIGURAR_EXAMEN
      */
     @Transactional
     public ConfiguracionExamenDTO configurarExamen(ConfiguracionExamenDTO configuracionDTO) {
-        // Verificamos que el examen existe
         if (!examenRepository.existsById(configuracionDTO.getExamenId())) {
             throw new ResourceNotFoundException("Examen no encontrado con id: " + configuracionDTO.getExamenId());
         }
 
         StoredProcedureQuery query = entityManager
-                .createStoredProcedureQuery("PK_EXAMEN.PCONFIGURAR_EXAMEN")
-                .registerStoredProcedureParameter("examen_id", Long.class, ParameterMode.IN)
-                .registerStoredProcedureParameter("peso", BigDecimal.class, ParameterMode.IN)
-                .registerStoredProcedureParameter("umbral", BigDecimal.class, ParameterMode.IN)
-                .registerStoredProcedureParameter("fecha_hora", Timestamp.class, ParameterMode.IN)
-                .registerStoredProcedureParameter("cant_preguntas", Integer.class, ParameterMode.IN)
-                .registerStoredProcedureParameter("modo_seleccion", String.class, ParameterMode.IN)
-                .registerStoredProcedureParameter("limite_tiempo", Integer.class, ParameterMode.IN);
+                .createStoredProcedureQuery("PCONFIGURAR_EXAMEN")
+                .registerStoredProcedureParameter("p_examen_id", Long.class, ParameterMode.IN)
+                .registerStoredProcedureParameter("p_peso", BigDecimal.class, ParameterMode.IN)
+                .registerStoredProcedureParameter("p_umbral", BigDecimal.class, ParameterMode.IN)
+                .registerStoredProcedureParameter("p_fecha_hora", Timestamp.class, ParameterMode.IN)
+                .registerStoredProcedureParameter("p_cant_preguntas", Integer.class, ParameterMode.IN)
+                .registerStoredProcedureParameter("p_modo_seleccion", String.class, ParameterMode.IN)
+                .registerStoredProcedureParameter("p_limite_tiempo", Integer.class, ParameterMode.IN);
 
-        query.setParameter("examen_id", configuracionDTO.getExamenId());
-        query.setParameter("peso", configuracionDTO.getPeso());
-        query.setParameter("umbral", configuracionDTO.getUmbral());
-        query.setParameter("fecha_hora", configuracionDTO.getFechaHora() != null ? new Timestamp(configuracionDTO.getFechaHora().getTime()) : null);
-        query.setParameter("cant_preguntas", configuracionDTO.getCantPreguntas());
-        query.setParameter("modo_seleccion", configuracionDTO.getModoSeleccion());
-        query.setParameter("limite_tiempo", configuracionDTO.getLimiteTiempo());
+        query.setParameter("p_examen_id", configuracionDTO.getExamenId());
+        query.setParameter("p_peso", configuracionDTO.getPeso());
+        query.setParameter("p_umbral", configuracionDTO.getUmbral());
+        query.setParameter("p_fecha_hora", configuracionDTO.getFechaHora() != null ? new Timestamp(configuracionDTO.getFechaHora().getTime()) : null);
+        query.setParameter("p_cant_preguntas", configuracionDTO.getCantPreguntas());
+        query.setParameter("p_modo_seleccion", configuracionDTO.getModoSeleccion());
+        query.setParameter("p_limite_tiempo", configuracionDTO.getLimiteTiempo());
 
         query.execute();
 
         return configuracionDTO;
+    }
+
+    /**
+     * Asigna preguntas aleatorias a un examen utilizando el procedimiento ASIGNAR_PREGUNTAS_ALEATORIAS
+     */
+    @Transactional
+    public void asignarPreguntasAleatorias(Long examenId, Integer cantidad, Long temaId) {
+        if (!examenRepository.existsById(examenId)) {
+            throw new ResourceNotFoundException("Examen no encontrado con id: " + examenId);
+        }
+
+        StoredProcedureQuery query = entityManager
+                .createStoredProcedureQuery("ASIGNAR_PREGUNTAS_ALEATORIAS")
+                .registerStoredProcedureParameter("p_examen_id", Long.class, ParameterMode.IN)
+                .registerStoredProcedureParameter("p_cantidad", Integer.class, ParameterMode.IN)
+                .registerStoredProcedureParameter("p_tema_id", Long.class, ParameterMode.IN)
+                .registerStoredProcedureParameter("p_dificultad_id", Long.class, ParameterMode.IN);
+
+        query.setParameter("p_examen_id", examenId);
+        query.setParameter("p_cantidad", cantidad);
+        query.setParameter("p_tema_id", temaId);
+        query.setParameter("p_dificultad_id", null); // Opcional
+
+        query.execute();
+    }
+
+    /**
+     * Califica un examen utilizando la función CALIFICAR_EXAMEN
+     */
+    @Transactional
+    public BigDecimal calificarExamen(Long envioId) {
+        String sql = "SELECT CALIFICAR_EXAMEN(:envioId) FROM DUAL";
+
+        jakarta.persistence.Query query = entityManager.createNativeQuery(sql);
+        Parameter<Integer> param = query.getParameter(1, Integer.class);
+        query.setParameter(param, envioId.intValue());
+
+        Number result = (Number) query.getSingleResult();
+        return BigDecimal.valueOf(result.doubleValue());
     }
 
     /**
@@ -296,13 +329,14 @@ public class ExamenService {
     }
 
     /**
-     * Obtiene exámenes por curso utilizando la función PK_EXAMEN.POBTENER_EXAMENES_CURSO
+     * Obtiene exámenes por curso utilizando la función POBTENER_EXAMENES_CURSO
      */
     @Transactional(readOnly = true)
     public List<Map<String, Object>> obtenerExamenesPorCurso(Long cursoId) {
         StoredProcedureQuery query = entityManager
-                .createStoredProcedureQuery("PK_EXAMEN.POBTENER_EXAMENES_CURSO", "ExamenesMapping")
-                .registerStoredProcedureParameter("p_curso_id", Long.class, ParameterMode.IN);
+                .createStoredProcedureQuery("POBTENER_EXAMENES_CURSO")
+                .registerStoredProcedureParameter("p_curso_id", Long.class, ParameterMode.IN)
+                .registerStoredProcedureParameter("p_cursor", void.class, ParameterMode.REF_CURSOR);
 
         query.setParameter("p_curso_id", cursoId);
 

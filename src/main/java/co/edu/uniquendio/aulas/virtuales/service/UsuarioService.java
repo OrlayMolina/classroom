@@ -2,7 +2,9 @@ package co.edu.uniquendio.aulas.virtuales.service;
 
 import co.edu.uniquendio.aulas.virtuales.config.JWTUtils;
 import co.edu.uniquendio.aulas.virtuales.dto.LoginDTO;
+import co.edu.uniquendio.aulas.virtuales.dto.RolDTO;
 import co.edu.uniquendio.aulas.virtuales.dto.TokenDTO;
+import co.edu.uniquendio.aulas.virtuales.model.Rol;
 import jakarta.persistence.*;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import co.edu.uniquendio.aulas.virtuales.dto.UsuarioDTO;
@@ -36,17 +38,17 @@ public class UsuarioService {
     private final BCryptPasswordEncoder passwordEncoder;
 
     /**
-     * Crea un nuevo usuario utilizando el procedimiento almacenado PK_USUARIO.PCREAR_USUARIO
+     * Crea un nuevo usuario utilizando el procedimiento almacenado PCREAR_USUARIO
      */
     @Transactional
     public UsuarioDTO crearUsuario(UsuarioDTO usuarioDTO) {
         StoredProcedureQuery query = entityManager
-                .createStoredProcedureQuery("PK_USUARIO.PCREAR_USUARIO")
-                .registerStoredProcedureParameter("email", String.class, ParameterMode.IN)
-                .registerStoredProcedureParameter("clave", String.class, ParameterMode.IN)
-                .registerStoredProcedureParameter("documento_id", String.class, ParameterMode.IN)
-                .registerStoredProcedureParameter("nombre", String.class, ParameterMode.IN)
-                .registerStoredProcedureParameter("apellido", String.class, ParameterMode.IN)
+                .createStoredProcedureQuery("PCREAR_USUARIO")
+                .registerStoredProcedureParameter("p_email", String.class, ParameterMode.IN)
+                .registerStoredProcedureParameter("p_clave", String.class, ParameterMode.IN)
+                .registerStoredProcedureParameter("p_documento_id", String.class, ParameterMode.IN)
+                .registerStoredProcedureParameter("p_nombre", String.class, ParameterMode.IN)
+                .registerStoredProcedureParameter("p_apellido", String.class, ParameterMode.IN)
                 .registerStoredProcedureParameter("rol_id", Long.class, ParameterMode.IN)
                 .registerStoredProcedureParameter("usuario_id", Long.class, ParameterMode.OUT);
 
@@ -67,7 +69,7 @@ public class UsuarioService {
     }
 
     /**
-     * Actualiza un usuario existente utilizando el procedimiento almacenado PK_USUARIO.PACTUALIZAR_USUARIO
+     * Actualiza un usuario existente utilizando el procedimiento almacenado PACTUALIZAR_USUARIO
      */
     @Transactional
     public UsuarioDTO actualizarUsuario(Long id, UsuarioDTO usuarioDTO) {
@@ -77,7 +79,7 @@ public class UsuarioService {
         }
 
         StoredProcedureQuery query = entityManager
-                .createStoredProcedureQuery("PK_USUARIO.PACTUALIZAR_USUARIO")
+                .createStoredProcedureQuery("PACTUALIZAR_USUARIO")
                 .registerStoredProcedureParameter("usuario_id", Long.class, ParameterMode.IN)
                 .registerStoredProcedureParameter("email", String.class, ParameterMode.IN)
                 .registerStoredProcedureParameter("clave", String.class, ParameterMode.IN)
@@ -102,13 +104,14 @@ public class UsuarioService {
         query.setParameter("rol_id", usuarioDTO.getRolId());
 
         query.execute();
+        entityManager.flush();
 
         usuarioDTO.setUsuarioId(id);
         return usuarioDTO;
     }
 
     /**
-     * Elimina un usuario utilizando el procedimiento almacenado PK_USUARIO.PELIMINAR_USUARIO
+     * Elimina un usuario utilizando el procedimiento almacenado PELIMINAR_USUARIO
      */
     @Transactional
     public void eliminarUsuario(Long id) {
@@ -117,7 +120,7 @@ public class UsuarioService {
         }
 
         StoredProcedureQuery query = entityManager
-                .createStoredProcedureQuery("PK_USUARIO.PELIMINAR_USUARIO")
+                .createStoredProcedureQuery("PELIMINAR_USUARIO")
                 .registerStoredProcedureParameter("usuario_id", Long.class, ParameterMode.IN);
 
         query.setParameter("usuario_id", id);
@@ -167,12 +170,12 @@ public class UsuarioService {
     }
 
     /**
-     * Verifica si un usuario es profesor utilizando la función PK_USUARIO.PES_PROFESOR
+     * Verifica si un usuario es profesor utilizando la función PES_PROFESOR
      */
     @Transactional(readOnly = true)
     public boolean esProfesor(Long usuarioId) {
         StoredProcedureQuery query = entityManager
-                .createStoredProcedureQuery("PK_USUARIO.PES_PROFESOR")
+                .createStoredProcedureQuery("PES_PROFESOR")
                 .registerStoredProcedureParameter("p_usuario_id", Long.class, ParameterMode.IN)
                 .registerStoredProcedureParameter("RETURN_VALUE", Boolean.class, ParameterMode.OUT);
 
@@ -183,12 +186,12 @@ public class UsuarioService {
     }
 
     /**
-     * Verifica si un usuario es estudiante utilizando la función PK_USUARIO.PES_ESTUDIANTE
+     * Verifica si un usuario es estudiante utilizando la función PES_ESTUDIANTE
      */
     @Transactional(readOnly = true)
     public boolean esEstudiante(Long usuarioId) {
         StoredProcedureQuery query = entityManager
-                .createStoredProcedureQuery("PK_USUARIO.PES_ESTUDIANTE")
+                .createStoredProcedureQuery("PES_ESTUDIANTE")
                 .registerStoredProcedureParameter("p_usuario_id", Long.class, ParameterMode.IN)
                 .registerStoredProcedureParameter("RETURN_VALUE", Boolean.class, ParameterMode.OUT);
 
@@ -199,12 +202,12 @@ public class UsuarioService {
     }
 
     /**
-     * Obtiene la lista de estudiantes de un curso utilizando la función PK_USUARIO.POBTENER_ESTUDIANTES_CURSO
+     * Obtiene la lista de estudiantes de un curso utilizando la función POBTENER_ESTUDIANTES_CURSO
      */
     @Transactional(readOnly = true)
     public List<UsuarioDTO> obtenerEstudiantesCurso(Long cursoId) {
         StoredProcedureQuery query = entityManager
-                .createStoredProcedureQuery("PK_USUARIO.POBTENER_ESTUDIANTES_CURSO")
+                .createStoredProcedureQuery("POBTENER_ESTUDIANTES_CURSO")
                 .registerStoredProcedureParameter("p_curso_id", Long.class, ParameterMode.IN);
 
         query.setParameter("p_curso_id", cursoId);
@@ -243,6 +246,23 @@ public class UsuarioService {
 
         return usuarioDTO;
     }
+
+    /**
+     * Obtiene el rol del usuario ID
+     * @param id
+     * @return
+     */
+    @Transactional(readOnly = true)
+    public RolDTO obtenerNombreRolUsuario(Long id) {
+        Optional<Rol> usuarioRol = usuarioRepository.findRolByUsuarioId(id);
+        if(usuarioRol.isEmpty()) {
+            throw new ResourceNotFoundException("Rol no encontrado con id: " + id);
+        }
+
+        Rol rol = usuarioRol.get();
+        return new RolDTO(rol.getNombreRol());
+    }
+
 
     /**
      * Obtiene todos los usuarios (sin devolver las claves)

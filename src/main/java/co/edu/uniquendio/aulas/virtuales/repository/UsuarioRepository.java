@@ -1,5 +1,6 @@
 package co.edu.uniquendio.aulas.virtuales.repository;
 
+import co.edu.uniquendio.aulas.virtuales.model.Rol;
 import co.edu.uniquendio.aulas.virtuales.model.Usuario;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -27,4 +28,7 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
 
     @Query("SELECT u FROM Usuario u WHERE u.rol.rolId = 2 AND u.usuarioId IN (SELECT e.estudiante.usuarioId FROM EnvioExamen e WHERE e.examen.examenId = :examenId)")
     List<Usuario> findEstudiantesQueRealizaronExamen(@Param("examenId") Long examenId);
+
+    @Query("SELECT u.rol FROM Usuario u WHERE u.usuarioId = :usuarioId")
+    Optional<Rol> findRolByUsuarioId(@Param("usuarioId") Long usuarioId);
 }

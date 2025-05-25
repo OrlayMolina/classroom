@@ -4,10 +4,8 @@ import co.edu.uniquendio.aulas.virtuales.dto.CursoDTO;
 import co.edu.uniquendio.aulas.virtuales.exception.ResourceNotFoundException;
 import co.edu.uniquendio.aulas.virtuales.model.Curso;
 import co.edu.uniquendio.aulas.virtuales.repository.CursoRepository;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.ParameterMode;
-import jakarta.persistence.PersistenceContext;
-import jakarta.persistence.StoredProcedureQuery;
+import jakarta.persistence.*;
+import jakarta.persistence.Query;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
@@ -27,58 +25,57 @@ public class CursoService {
     private final ModelMapper modelMapper;
 
     /**
-     * Crea un nuevo curso utilizando el procedimiento almacenado PK_CURSO.PCREAR_CURSO
+     * Crea un nuevo curso utilizando el procedimiento almacenado PCREAR_CURSO
      */
     @Transactional
     public CursoDTO crearCurso(CursoDTO cursoDTO) {
         StoredProcedureQuery query = entityManager
-                .createStoredProcedureQuery("PK_CURSO.PCREAR_CURSO")
-                .registerStoredProcedureParameter("nombre", String.class, ParameterMode.IN)
-                .registerStoredProcedureParameter("plan_estudio_id", Long.class, ParameterMode.IN)
-                .registerStoredProcedureParameter("profesor_id", Long.class, ParameterMode.IN)
-                .registerStoredProcedureParameter("horario_id", Long.class, ParameterMode.IN)
-                .registerStoredProcedureParameter("dia_id", Long.class, ParameterMode.IN)
-                .registerStoredProcedureParameter("curso_id", Long.class, ParameterMode.OUT);
+                .createStoredProcedureQuery("PCREAR_CURSO")
+                .registerStoredProcedureParameter("p_nombre", String.class, ParameterMode.IN)
+                .registerStoredProcedureParameter("p_plan_estudio_id", Long.class, ParameterMode.IN)
+                .registerStoredProcedureParameter("p_profesor_id", Long.class, ParameterMode.IN)
+                .registerStoredProcedureParameter("p_horario_id", Long.class, ParameterMode.IN)
+                .registerStoredProcedureParameter("p_dia_id", Long.class, ParameterMode.IN)
+                .registerStoredProcedureParameter("p_curso_id", Long.class, ParameterMode.OUT);
 
-        query.setParameter("nombre", cursoDTO.getNombre());
-        query.setParameter("plan_estudio_id", cursoDTO.getPlanEstudioId());
-        query.setParameter("profesor_id", cursoDTO.getProfesorId());
-        query.setParameter("horario_id", cursoDTO.getHorarioId());
-        query.setParameter("dia_id", cursoDTO.getDiaId());
+        query.setParameter("p_nombre", cursoDTO.getNombre());
+        query.setParameter("p_plan_estudio_id", cursoDTO.getPlanEstudioId());
+        query.setParameter("p_profesor_id", cursoDTO.getProfesorId());
+        query.setParameter("p_horario_id", cursoDTO.getHorarioId());
+        query.setParameter("p_dia_id", cursoDTO.getDiaId() != null ? cursoDTO.getDiaId() : 1L);
 
         query.execute();
 
-        Long cursoId = (Long) query.getOutputParameterValue("curso_id");
+        Long cursoId = (Long) query.getOutputParameterValue("p_curso_id");
         cursoDTO.setCursoId(cursoId);
 
         return cursoDTO;
     }
 
     /**
-     * Actualiza un curso existente utilizando el procedimiento almacenado PK_CURSO.PACTUALIZAR_CURSO
+     * Actualiza un curso existente utilizando el procedimiento almacenado PACTUALIZAR_CURSO
      */
     @Transactional
     public CursoDTO actualizarCurso(Long id, CursoDTO cursoDTO) {
-        // Verificamos que el curso existe
         if (!cursoRepository.existsById(id)) {
             throw new ResourceNotFoundException("Curso no encontrado con id: " + id);
         }
 
         StoredProcedureQuery query = entityManager
-                .createStoredProcedureQuery("PK_CURSO.PACTUALIZAR_CURSO")
-                .registerStoredProcedureParameter("curso_id", Long.class, ParameterMode.IN)
-                .registerStoredProcedureParameter("nombre", String.class, ParameterMode.IN)
-                .registerStoredProcedureParameter("plan_estudio_id", Long.class, ParameterMode.IN)
-                .registerStoredProcedureParameter("profesor_id", Long.class, ParameterMode.IN)
-                .registerStoredProcedureParameter("horario_id", Long.class, ParameterMode.IN)
-                .registerStoredProcedureParameter("dia_id", Long.class, ParameterMode.IN);
+                .createStoredProcedureQuery("PACTUALIZAR_CURSO")
+                .registerStoredProcedureParameter("p_curso_id", Long.class, ParameterMode.IN)
+                .registerStoredProcedureParameter("p_nombre", String.class, ParameterMode.IN)
+                .registerStoredProcedureParameter("p_plan_estudio_id", Long.class, ParameterMode.IN)
+                .registerStoredProcedureParameter("p_profesor_id", Long.class, ParameterMode.IN)
+                .registerStoredProcedureParameter("p_horario_id", Long.class, ParameterMode.IN)
+                .registerStoredProcedureParameter("p_dia_id", Long.class, ParameterMode.IN);
 
-        query.setParameter("curso_id", id);
-        query.setParameter("nombre", cursoDTO.getNombre());
-        query.setParameter("plan_estudio_id", cursoDTO.getPlanEstudioId());
-        query.setParameter("profesor_id", cursoDTO.getProfesorId());
-        query.setParameter("horario_id", cursoDTO.getHorarioId());
-        query.setParameter("dia_id", cursoDTO.getDiaId());
+        query.setParameter("p_curso_id", id);
+        query.setParameter("p_nombre", cursoDTO.getNombre());
+        query.setParameter("p_plan_estudio_id", cursoDTO.getPlanEstudioId());
+        query.setParameter("p_profesor_id", cursoDTO.getProfesorId());
+        query.setParameter("p_horario_id", cursoDTO.getHorarioId());
+        query.setParameter("p_dia_id", cursoDTO.getDiaId() != null ? cursoDTO.getDiaId() : 1L);
 
         query.execute();
 
@@ -87,46 +84,59 @@ public class CursoService {
     }
 
     /**
-     * Elimina un curso utilizando el procedimiento almacenado PK_CURSO.PELIMINAR_CURSO
+     * Elimina un curso utilizando el procedimiento almacenado PELIMINAR_CURSO
      */
     @Transactional
     public void eliminarCurso(Long id) {
-        // Verificamos que el curso existe
         if (!cursoRepository.existsById(id)) {
             throw new ResourceNotFoundException("Curso no encontrado con id: " + id);
         }
 
         StoredProcedureQuery query = entityManager
-                .createStoredProcedureQuery("PK_CURSO.PELIMINAR_CURSO")
-                .registerStoredProcedureParameter("curso_id", Long.class, ParameterMode.IN);
+                .createStoredProcedureQuery("PELIMINAR_CURSO")
+                .registerStoredProcedureParameter("p_curso_id", Long.class, ParameterMode.IN);
 
-        query.setParameter("curso_id", id);
+        query.setParameter("p_curso_id", id);
         query.execute();
     }
 
     /**
-     * Obtiene los cursos por profesor utilizando la función PK_CURSO.POBTENER_CURSOS_PROFESOR
+     * Obtiene los cursos por profesor utilizando consulta nativa - VERSIÓN CORREGIDA
      */
     @Transactional(readOnly = true)
     public List<CursoDTO> obtenerCursosProfesor(Long profesorId) {
-        StoredProcedureQuery query = entityManager
-                .createStoredProcedureQuery("PK_CURSO.POBTENER_CURSOS_PROFESOR", "CursosMapping")
-                .registerStoredProcedureParameter("p_profesor_id", Long.class, ParameterMode.IN);
-
-        query.setParameter("p_profesor_id", profesorId);
-        query.execute();
+        String sql = "SELECT " +
+                "   c.CURSO_ID, " +
+                "   c.NOMBRE, " +
+                "   c.PLAN_ESTUDIO_ID, " +
+                "   c.PROFESOR_ID, " +
+                "   c.HORARIO_ID, " +
+                "   h.DIA_ID, " +
+                "   h.HORA_INICIO, " +
+                "   h.HORA_FIN, " +
+                "   h.UBICACION, " +
+                "   d.NOMBRE_DIA, " +
+                "   pe.NOMBRE AS NOMBRE_PLAN_ESTUDIO " +
+                "FROM " +
+                "   CURSO c " +
+                "JOIN HORARIO h ON c.HORARIO_ID = h.HORARIO_ID " +
+                "JOIN DIAS_SEMANA d ON h.DIA_ID = d.DIA_ID " +
+                "JOIN PLAN_ESTUDIO pe ON c.PLAN_ESTUDIO_ID = pe.PLAN_ESTUDIO_ID " +
+                "WHERE c.PROFESOR_ID = ?1";
 
         @SuppressWarnings("unchecked")
-        List<Object[]> resultList = query.getResultList();
+        List<Object[]> resultList = entityManager.createNativeQuery(sql)
+                .setParameter(1, profesorId)
+                .getResultList();
 
         return resultList.stream().map(row -> {
             CursoDTO dto = new CursoDTO();
-            dto.setCursoId((Long) row[0]);
+            dto.setCursoId(((Number) row[0]).longValue());
             dto.setNombre((String) row[1]);
-            dto.setPlanEstudioId((Long) row[2]);
-            dto.setProfesorId((Long) row[3]);
-            dto.setHorarioId((Long) row[4]);
-            dto.setDiaId((Long) row[5]);
+            dto.setPlanEstudioId(((Number) row[2]).longValue());
+            dto.setProfesorId(((Number) row[3]).longValue());
+            dto.setHorarioId(((Number) row[4]).longValue());
+            dto.setDiaId(((Number) row[5]).longValue());
             dto.setHoraInicio((String) row[6]);
             dto.setHoraFin((String) row[7]);
             dto.setUbicacion((String) row[8]);
@@ -136,26 +146,48 @@ public class CursoService {
         }).collect(Collectors.toList());
     }
 
+    /**
+     * Obtiene cursos de estudiante utilizando consulta nativa
+     */
     @Transactional(readOnly = true)
     public List<CursoDTO> obtenerCursosEstudiante(Long estudianteId) {
-        StoredProcedureQuery query = entityManager
-                .createStoredProcedureQuery("PK_CURSO.POBTENER_CURSOS_ESTUDIANTE", "CursosEstudianteMapping")
-                .registerStoredProcedureParameter("p_estudiante_id", Long.class, ParameterMode.IN);
+        String sql = "SELECT " +
+                "   c.CURSO_ID, " +
+                "   c.NOMBRE, " +
+                "   c.PLAN_ESTUDIO_ID, " +
+                "   c.PROFESOR_ID, " +
+                "   c.HORARIO_ID, " +
+                "   h.DIA_ID, " +
+                "   h.HORA_INICIO, " +
+                "   h.HORA_FIN, " +
+                "   h.UBICACION, " +
+                "   d.NOMBRE_DIA, " +
+                "   pe.NOMBRE AS NOMBRE_PLAN_ESTUDIO, " +
+                "   u.NOMBRE AS NOMBRE_PROFESOR, " +
+                "   u.APELLIDO AS APELLIDO_PROFESOR " +
+                "FROM CURSO c " +
+                "JOIN MATRICULA m ON c.CURSO_ID = m.CURSO_ID " +
+                "JOIN HORARIO h ON c.HORARIO_ID = h.HORARIO_ID " +
+                "JOIN DIAS_SEMANA d ON h.DIA_ID = d.DIA_ID " +
+                "JOIN PLAN_ESTUDIO pe ON c.PLAN_ESTUDIO_ID = pe.PLAN_ESTUDIO_ID " +
+                "JOIN USUARIO u ON c.PROFESOR_ID = u.USUARIO_ID " +
+                "WHERE m.ESTUDIANTE_ID = :estudianteId";
 
-        query.setParameter("p_estudiante_id", estudianteId);
-        query.execute();
+        Query query = entityManager.createNativeQuery(sql);
+        Parameter<Integer> param = query.getParameter(1, Integer.class);
+        query.setParameter(param, estudianteId.intValue());
 
         @SuppressWarnings("unchecked")
         List<Object[]> resultList = query.getResultList();
 
         return resultList.stream().map(row -> {
             CursoDTO dto = new CursoDTO();
-            dto.setCursoId((Long) row[0]);
+            dto.setCursoId(((Number) row[0]).longValue());
             dto.setNombre((String) row[1]);
-            dto.setPlanEstudioId((Long) row[2]);
-            dto.setProfesorId((Long) row[3]);
-            dto.setHorarioId((Long) row[4]);
-            dto.setDiaId((Long) row[5]);
+            dto.setPlanEstudioId(((Number) row[2]).longValue());
+            dto.setProfesorId(((Number) row[3]).longValue());
+            dto.setHorarioId(((Number) row[4]).longValue());
+            dto.setDiaId(((Number) row[5]).longValue());
             dto.setHoraInicio((String) row[6]);
             dto.setHoraFin((String) row[7]);
             dto.setUbicacion((String) row[8]);
@@ -168,17 +200,16 @@ public class CursoService {
     }
 
     /**
-     * Matricula un estudiante en un curso utilizando el procedimiento PK_CURSO.PMATRICULAR_ESTUDIANTE
+     * Matricula un estudiante en un curso utilizando el procedimiento PMATRICULAR_ESTUDIANTE
      */
     @Transactional
     public void matricularEstudiante(Long cursoId, Long estudianteId) {
-        // Verificamos que el curso existe
         if (!cursoRepository.existsById(cursoId)) {
             throw new ResourceNotFoundException("Curso no encontrado con id: " + cursoId);
         }
 
         StoredProcedureQuery query = entityManager
-                .createStoredProcedureQuery("PK_CURSO.PMATRICULAR_ESTUDIANTE")
+                .createStoredProcedureQuery("PMATRICULAR_ESTUDIANTE")
                 .registerStoredProcedureParameter("p_curso_id", Long.class, ParameterMode.IN)
                 .registerStoredProcedureParameter("p_estudiante_id", Long.class, ParameterMode.IN);
 
@@ -189,17 +220,16 @@ public class CursoService {
     }
 
     /**
-     * Retira un estudiante de un curso utilizando el procedimiento PK_CURSO.PRETIRAR_ESTUDIANTE
+     * Retira un estudiante de un curso utilizando el procedimiento PRETIRAR_ESTUDIANTE
      */
     @Transactional
     public void retirarEstudiante(Long cursoId, Long estudianteId) {
-        // Verificamos que el curso existe
         if (!cursoRepository.existsById(cursoId)) {
             throw new ResourceNotFoundException("Curso no encontrado con id: " + cursoId);
         }
 
         StoredProcedureQuery query = entityManager
-                .createStoredProcedureQuery("PK_CURSO.PRETIRAR_ESTUDIANTE")
+                .createStoredProcedureQuery("PRETIRAR_ESTUDIANTE")
                 .registerStoredProcedureParameter("p_curso_id", Long.class, ParameterMode.IN)
                 .registerStoredProcedureParameter("p_estudiante_id", Long.class, ParameterMode.IN);
 
@@ -210,22 +240,17 @@ public class CursoService {
     }
 
     /**
-     * Verifica si un estudiante está matriculado en un curso utilizando la función PK_CURSO.PESTA_MATRICULADO
+     * Verifica si un estudiante está matriculado en un curso utilizando la función PESTA_MATRICULADO
      */
     @Transactional(readOnly = true)
     public boolean estaMatriculado(Long cursoId, Long estudianteId) {
-        StoredProcedureQuery query = entityManager
-                .createStoredProcedureQuery("PK_CURSO.PESTA_MATRICULADO")
-                .registerStoredProcedureParameter("p_curso_id", Long.class, ParameterMode.IN)
-                .registerStoredProcedureParameter("p_estudiante_id", Long.class, ParameterMode.IN)
-                .registerStoredProcedureParameter("RETURN_VALUE", Boolean.class, ParameterMode.OUT);
+        String sql = "SELECT PESTA_MATRICULADO(?1, ?2) FROM DUAL";
+        Query query = entityManager.createNativeQuery(sql);
+        query.setParameter(1, cursoId.intValue());
+        query.setParameter(2, estudianteId.intValue());
 
-        query.setParameter("p_curso_id", cursoId);
-        query.setParameter("p_estudiante_id", estudianteId);
-
-        query.execute();
-
-        return (Boolean) query.getOutputParameterValue("RETURN_VALUE");
+        Number result = (Number) query.getSingleResult();
+        return result.intValue() == 1;
     }
 
     /**
